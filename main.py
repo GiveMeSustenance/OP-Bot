@@ -60,7 +60,7 @@ async def on_message(message): #when a message is sent to the discord server
     return #dont do anything
     
   if message.content.lower().startswith('!ophelp'): #if the message starts with "!ophelp" (not case sensitive bc it sets all characters to lowercase --> .lower() )
-    await message.channel.send("**Current commands:**\n!ophelp\n!time [time zone]\n!alltimezones\n!alltimes\n!dadmode [true/false]") #sends a hard coded list of commands
+    await message.channel.send("**Current commands:**\n!ophelp\n!time [time zone]\n!alltimezones\n!alltimes\n!dadmode [true/false]\n!github") #sends a hard coded list of commands
 
   global dadMode
   
@@ -79,6 +79,9 @@ async def on_message(message): #when a message is sent to the discord server
       dadMessage = dadMessage.split(" ", 1)[0] #takes the first word of the new string
       await message.channel.send("Hi " + dadMessage + ", I'm OP Bot") #sends msg to discord
 
+  if message.content.lower().startswith("!github"): #if the message starts with "!github"
+    message.channel.send("https://github.com/GiveMeSustenance/OP-Bot") #sends the link
+  
   if message.content.lower().startswith('!time'): #if the message starts with "!time"
     input = message.content #saves message as a string
     if input.find(' ') != -1: #checks to make sure it contains a space
