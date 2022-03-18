@@ -80,7 +80,7 @@ async def on_message(message): #when a message is sent to the discord server
       await message.channel.send("Hi " + dadMessage + ", I'm OP Bot") #sends msg to discord
 
   if message.content.lower().startswith("!github"): #if the message starts with "!github"
-    message.channel.send("https://github.com/GiveMeSustenance/OP-Bot") #sends the link
+    await message.channel.send("https://github.com/GiveMeSustenance/OP-Bot") #sends the link
   
   if message.content.lower().startswith('!time'): #if the message starts with "!time"
     input = message.content #saves message as a string
