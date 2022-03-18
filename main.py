@@ -65,7 +65,7 @@ async def on_message(message): #when a message is sent to the discord server
   global dadMode
   
   if message.content.lower().startswith("!dadmode"): #if the message starts with "!dadmode"
-    dadToggle = message.content.split("!dadmode ",1 )[1] #takes the text after "!dadmode" ie (true/false)
+    dadToggle = message.content[9:] #takes the text after "!dadmode" ie (true/false)
     if dadToggle == "true": #if true
       dadMode = 1
       await message.channel.send("Dad mode enabled") #sends "Dad mode enabled" to discord
@@ -75,8 +75,7 @@ async def on_message(message): #when a message is sent to the discord server
   
   if dadMode == 1: #if dadMode is true (on)
     if message.content.lower().startswith("im"): #if the message starts with "im"
-      dadMessage = message.content.split("im ",1)[1] #takes the text after "im" and saves as a new string
-      dadMessage = dadMessage.split(" ", 1)[0] #takes the first word of the new string
+      dadMessage = message.content[:2] #takes the text after "im" and saves as a new string
       await message.channel.send("Hi " + dadMessage + ", I'm OP Bot") #sends msg to discord
 
   if message.content.lower().startswith("!github"): #if the message starts with "!github"
@@ -86,7 +85,7 @@ async def on_message(message): #when a message is sent to the discord server
     input = message.content #saves message as a string
     if input.find(' ') != -1: #checks to make sure it contains a space
       if len(input) >= 5: #checks to make sure its greater then or equal to 5 characters
-        customZone = message.content.split("!time ",1)[1] #takes the text after "!time" and saves as a new string
+        customZone = message.content[6:] #takes the text after "!time" and saves as a new string
         print("customZone: " + customZone) #prints the string to the console for troubleshoting --->
         time = get_customTime(customZone) #sends "customZone" the function "get_customTime" (above) and gets the time back
         timeString = str(time) #makes the integer from "get_customTime" into a string
@@ -99,14 +98,14 @@ async def on_message(message): #when a message is sent to the discord server
     await message.channel.send(allTimeZones) #send the list of all the saved time zones
 
   if message.content.lower().startswith('!addtimezone'): #if the message starts with "!addtimezone"
-    newTimeZone = message.content.split("!addtimezone ", 1)[1] #takes the text after "!addtimezone" and saves as a new string
+    newTimeZone = message.content[13:] #takes the text after "!addtimezone" and saves as a new string
     print(newTimeZone) #prints it to the console
     update_publicTimeZones(newTimeZone) #sends "newTimeZone" the function "update_publicTimeZones" (above) which adds "newTimeZone" to the list of saved time zones
     await message.channel.send(newTimeZone + " was added to the public time zones!") #sends a discord message to show it was added
 
   if message.content.lower().startswith('!deltimezone'): #if the message starts with "!deltimezone"
     if "publicTimeZones" in db.keys(): #if "publicTimeZones" exists (there is something in it)
-      delTimeZone = message.content.split("!deltimezone ", 1)[1] #takes the text after "!deltimezone" and saves as a new string
+      delTimeZone = message[13:] #takes the text after "!deltimezone" and saves as a new string
       delete_publicTimeZones(delTimeZone) #sends "delTimeZone" the function "delete_publicTimeZones" (above) which removes "delTimeZone" from the list of saved time zones
       await message.channel.send("Remaining public time zones:") #sends the list of remaining time zones in discord (broken rn)
       await message.channel.send(allTimeZones)
