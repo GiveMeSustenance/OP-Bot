@@ -23,6 +23,16 @@ def get_customTime(customZone): #returns the time at the provided time zone
   time = json_data['time'] #pulling a specific part of the data (the time)
   return(time)
 
+'''
+Parses a string to a boolean. Currently accepted values for true: 'true' '1'
+Other values entered will return false.
+''' #you should probably make some documentation comments too @sustenance 
+def parseBoolean(string):
+  accepted = ['true', '1'] #add more values to your heart's content
+  return (string.lower() in accepted)
+ 
+#end parseBool
+ 
 def update_publicTimeZones(timeZone): #adds time zones to the public time zone list
   if "publicTimeZone" in db.keys(): #if there is already things in the "publicTimeZone" key
     publicTimeZones = db["publicTimeZones"] #makes a temporary variable to manipulate
@@ -65,11 +75,11 @@ async def on_message(message): #when a message is sent to the discord server
   global dadMode
   
   if message.content.lower().startswith("!dadmode"): #if the message starts with "!dadmode"
-    dadToggle = message.content.split("!dadmode ",1 )[1] #takes the text after "!dadmode" ie (true/false)
-    if dadToggle == "true": #if true
+    dadToggle = parseBoolean(message.content.split("!dadmode ",1 )[1]) #takes the text after "!dadmode" ie (true/false)
+    if dadToggle: #if true
       dadMode = 1
       await message.channel.send("Dad mode enabled") #sends "Dad mode enabled" to discord
-    if dadToggle == "false": #if false
+    else: #if false
       dadMode = 0
       await message.channel.send("Dad mode disabled") #sends "Dad mode disabled" to discord
   
@@ -116,9 +126,11 @@ async def on_message(message): #when a message is sent to the discord server
     if "publicTimeZones" in db.keys():
       allPublicTimeZones.extend(db["publicTimeZones"])
     publicZoneString = " ".join(allPublicTimeZones)
-    for x in range(len(allPublicTimeZones)):
-      tempTimeZone = publicZoneString.split(" ")[x]
-      print(publicZoneString.split(" ")[x])
+    
+    arr = tempTimeZone = publicZoneString.split(" ") #add this so you don't have to call split so many times (saves memory & processing time)
+    for i in range(len(allPublicTimeZones)):
+      tempTimeZone = arr[x] #make sure you test that this still works
+      print(arr[x])
       tempTime = get_customTime(tempTimeZone)
       print("tempTimeZone: " + tempTimeZone)
       print("tempTime: " + tempTime)
