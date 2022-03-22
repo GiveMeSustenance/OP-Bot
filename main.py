@@ -2,6 +2,9 @@ import os
 import discord
 import requests
 import json
+from discord.ext import commands
+from discord.utils import get
+from all_time_zones import time_zone_check
 from replit import db
 from keep_alive import keep_alive
 
@@ -13,111 +16,206 @@ defaultPublicTimeZones = [ #the hard coded time zones
  "America/Toronto"
 ]
 
-allTimeZones = defaultPublicTimeZones #resets allTimeZones to the defualt hard coded zones
-if "publicTimeZones" in db.keys(): #if there is anything in the "publicTimeZones" key
-  allTimeZones.extend(db["publicTimeZones"]) #adds it to the end of allTimeZones to reflect the changes
+'''
+Discord Channel IDs:
+roles: 913704059758845952
+op-bot-status: 954875808047050752
 
-def get_customTime(customZone): #returns the time at the provided time zone
-  response = requests.get("https://www.timeapi.io/api/Time/current/zone?timeZone=" + customZone)
-  json_data = json.loads(response.text) #honestly idk
-  time = json_data['time'] #pulling a specific part of the data (the time)
+Emoji IDs:
+:Pigman: 914002544601231390
+:fight: 914004603647955064
+:farm: 916441731090767903
+:shovel: 916432312642728036
+:skull: 916113183553507358
+:heart: 916441840633393202
+'''
+
+'''
+Gets the time of a specific time zone.
+'''
+
+def get_customTime(timeZone):
+  response = requests.get("https://www.timeapi.io/api/Time/current/zone?timeZone=" + timeZone)
+  json_data = json.loads(response.text)
+  time = json_data['time']
   return(time)
+
+#end get_customTime
+
+'''
+Parses a string to a boolean. Currently accepted values for true: 'true' '1'
+Other values entered will return false.
+'''
+
+def parseBoolean(string):
+  accepted = ['true', '1'] #add more values to your heart's content
+  return (string.lower() in accepted)
+
+#end parseBool
 
 def update_publicTimeZones(timeZone): #adds time zones to the public time zone list
   if "publicTimeZone" in db.keys(): #if there is already things in the "publicTimeZone" key
     publicTimeZones = db["publicTimeZones"] #makes a temporary variable to manipulate
     publicTimeZones.extend(timeZone) #adds the time zone to the end of the variable
     db["publicTimeZones"] = publicTimeZones #sets the key to the updated variable
-    
-    allTimeZones = defaultPublicTimeZones #resets allTimeZones to the defualt hard coded zones
-    if "publicTimeZones" in db.keys(): #if there is anything in the "publicTimeZones" key
-      allTimeZones.extend(db["publicTimeZones"]) #adds it to the end of allTimeZones to reflect the changes
   else: # if the key does not already exist
     db["publicTimeZones"] = [timeZone] #makes the "publicTimeZones" key with the new time zone
-    allTimeZones = defaultPublicTimeZones #resets allTimeZones to the defualt hard coded zones
-    if "publicTimeZones" in db.keys(): #if there is anything in the "publicTimeZones" key
-      allTimeZones.extend(db["publicTimeZones"]) #adds it to the end of allTimeZones to reflect the changes
+
+#end update_publicTimeZones
 
 def delete_publicTimeZones(timeZone): #removes time zones from the public time zone list
   publicTimeZones = db["publicTimeZones"] #makes a temporary variable to manipulate
   publicTimeZones.remove(timeZone) #deletes the time zone from the variable
   db["publicTimeZones"] = publicTimeZones #sets the key to the updated variable
-  
-  allTimeZones = defaultPublicTimeZones #resets allTimeZones to the defualt hard coded zones
-  if "publicTimeZones" in db.keys(): #if there is anything in the "publicTimeZones" key
-     allTimeZones.extend(db["publicTimeZones"]) #adds it to the end of allTimeZones to reflect the changes
+
+#end delete_publicTimeZones
 
 @client.event 
 async def on_ready(): #when the bot is ready
     print('Logged in as {0.user}'.format(client)) #prints to the console ----->
+    channelID = client.get_channel(954875808047050752) #op-bot-status channel
+    #await channelID.send("**OP Bot Online**")
 
-    global dadMode #declaring the dadMode variable bc it was yelling at me in the chesk  
+    global dadMode #declaring the dadMode variable bc it was yelling at me in the check  
     dadMode = 0
+    print("when the bot loads up: ", defaultPublicTimeZones)
+
+'''
+@client.event #adds and removes roles on message reaction (broken)
+async def on_raw_reaction_add(payload):
+  guild = client.get_guild(payload.guild_id)
+  print(guild)
+  #print("Reaction added: ", payload)
+  if payload.channel_id == 913704059758845952: #roles channel
+    print("-----\nRoles\n-----")
+    if payload.emoji.id == 914002544601231390: #:pigman: emoji
+      print("-----\nPigman\n-----")
+      role = discord.utils.get(guild.roles, name="Pigman")
+      await payload.member.add_roles(role)
+ 
+@client.event
+async def on_raw_reaction_remove(reaction):
+  guild = discord.utils.find(lambda g: g.id == reaction.guild_id, bot.guilds)
+  if reaction.channel_id == 913704059758845952: #roles channel
+    if reaction.emoji.id == 914002544601231390: #:pigman: emoji
+      role = discord.utils.get(guild.roles, name="Pigman")
+      member = discord.utils.find(lambda m: m.id == reaction.user_id, guild.members)
+      if member is not None:
+        await member.remove_roles(role)
+      
+  print("Reaction removed")
+'''
 
 @client.event
 async def on_message(message): #when a message is sent to the discord server
+  
+  allTimeZones = defaultPublicTimeZones #resets allTimeZones to the defualt hard coded zones
+  if "publicTimeZones" in db.keys(): #if there is anything in the "publicTimeZones" key
+    allTimeZones = allTimeZones + list(db["publicTimeZones"]) #adds the list to allTimeZones to reflect the changes
+    #print("defaultPublicTimeZones", defaultPublicTimeZones)
+    #print("publicTimeZones:", list(db["publicTimeZones"]))
+    #print("allTimeZones:", allTimeZones, "\n")
+    
   if message.author == client.user: #if the bot sent the message
     return #dont do anything
-    
-  if message.content.lower().startswith('!ophelp'): #if the message starts with "!ophelp" (not case sensitive bc it sets all characters to lowercase --> .lower() )
-    await message.channel.send("**Current commands:**\n!ophelp\n!time [time zone]\n!alltimezones\n!alltimes\n!dadmode [true/false]\n!github") #sends a hard coded list of commands
 
-  global dadMode
+  ''' 
+  Sends a list of current commands and their arguments on command
+  ''' 
   
+  if message.content.lower().startswith('!ophelp'): #if the message starts with "!ophelp" (not case sensitive bc it sets all characters to lowercase --> .lower() )
+    await message.channel.send("**Current commands:**\n!ophelp\n!time [time zone]\n!alltimezones\n!alltimes\n!addtimezone [time zone] (no quotes)\n!deltimezone [time zone] (no quotes)\n!findtimezones\n!dadmode [true/false]\n!github") #sends a hard coded list of commands
+
+#end !ophelp
+
+  if message.content.lower().startswith("!findtimezones"): #if the message starts with "!github"
+    await message.channel.send("A list of time zones can be found at https://www.timeapi.io/api/TimeZone/AvailableTimeZones") #sends the link
+  
+  updateRoles = 0
+  
+  if updateRoles == 1:
+    if message.content.lower().startswith("!updaterolechannel"):
+      channelID = client.get_channel(913704059758845952) #roles channel
+      await channelID.send("**React with the emoji to get the role and be notified when it is pinged**\nPoll Taker: <:heart:916441840633393202>\nForge Lover: <:fight:914004603647955064>\nGorge Lover: <:farm:916441731090767903>\nRat Hater (Uncompromising Mode): <:skull:916113183553507358>\nTerraria Enthusiast: <:shovel:916432312642728036>\n")
+  
+  global dadMode
+
+  '''
+  Toggles Dad Mode (on/off)
+  '''
+
   if message.content.lower().startswith("!dadmode"): #if the message starts with "!dadmode"
     dadToggle = message.content[9:] #takes the text after "!dadmode" ie (true/false)
-    if dadToggle == "true": #if true
-      dadMode = 1
+    dadMode = parseBoolean(dadToggle)
+    if dadMode == True:
       await message.channel.send("Dad mode enabled") #sends "Dad mode enabled" to discord
-    if dadToggle == "false": #if false
-      dadMode = 0
+    else:
       await message.channel.send("Dad mode disabled") #sends "Dad mode disabled" to discord
   
-  if dadMode == 1: #if dadMode is true (on)
+  if dadMode == True: #if dadMode is true (on)
     if message.content.lower().startswith("im"): #if the message starts with "im"
-      dadMessage = message.content[:2] #takes the text after "im" and saves as a new string
+      dadMessage = message.content[3:] #takes the text after "im" and saves as a new string
       await message.channel.send("Hi " + dadMessage + ", I'm OP Bot") #sends msg to discord
 
+#end !dadmode
+
+  '''
+  Prints the GitHub link on command
+  '''
+  
   if message.content.lower().startswith("!github"): #if the message starts with "!github"
     await message.channel.send("https://github.com/GiveMeSustenance/OP-Bot") #sends the link
+
+#end !github
+
+  '''
+  Prints time of a specific input time zone on command
+  '''
   
   if message.content.lower().startswith('!time'): #if the message starts with "!time"
     input = message.content #saves message as a string
-    if input.find(' ') != -1: #checks to make sure it contains a space
-      if len(input) >= 5: #checks to make sure its greater then or equal to 5 characters
-        customZone = message.content[6:] #takes the text after "!time" and saves as a new string
-        print("customZone: " + customZone) #prints the string to the console for troubleshoting --->
-        time = get_customTime(customZone) #sends "customZone" the function "get_customTime" (above) and gets the time back
-        timeString = str(time) #makes the integer from "get_customTime" into a string
-        print("time: " + time) #prints the string to console
-        await message.channel.send("It is " + timeString + " in " + customZone) #sends the time in a discord message
+    if input.find(' ') != -1 and len(input) >= 5: #checks to make sure it contains a space
+      customZone = message.content[6:] #takes the text after "!time" and saves as a new string
+      print("customZone: " + customZone) #prints the string to the console for troubleshoting --->
+      time = get_customTime(customZone) #sends "customZone" the function "get_customTime" (above) and gets the time back
+      timeString = str(time) #makes the integer from "get_customTime" into a string
+      print("time: " + time) #prints the string to console
+      await message.channel.send("It is " + timeString + " in " + customZone) #sends the time in a discord message
     else: #if there is no space
       await message.channel.send("Please add a time zone: \n!addtimezone America/New_York \na list can be found at https://www.timeapi.io/api/TimeZone/AvailableTimeZones") #asks for a time zone and shows the syntax
 
   if message.content.lower().startswith('!alltimezones'): #if the message starts with "!alltimezones"
-    await message.channel.send(allTimeZones) #send the list of all the saved time zones
+    await message.channel.send("**All Time Zones:**")
+    for i in range(0, len(allTimeZones)):
+      await message.channel.send(str(i + 1) + ": " + str(allTimeZones[i]))
 
   if message.content.lower().startswith('!addtimezone'): #if the message starts with "!addtimezone"
     newTimeZone = message.content[13:] #takes the text after "!addtimezone" and saves as a new string
-    print(newTimeZone) #prints it to the console
-    update_publicTimeZones(newTimeZone) #sends "newTimeZone" the function "update_publicTimeZones" (above) which adds "newTimeZone" to the list of saved time zones
-    await message.channel.send(newTimeZone + " was added to the public time zones!") #sends a discord message to show it was added
+    if newTimeZone in time_zone_check:
+      if newTimeZone not in allTimeZones:
+        print(newTimeZone) #prints it to the console
+        update_publicTimeZones(newTimeZone) #sends "newTimeZone" the function "update_publicTimeZones" (above) which adds "newTimeZone" to the list of saved time zones
+        await message.channel.send(newTimeZone + " was added to the public time zones!") #sends a discord message to show it was added
+      else:
+        await message.channel.send(newTimeZone + " is alredy added")
+    else:
+      await message.channel.send("That is not a valid time zone. Please pick one from https://www.timeapi.io/api/TimeZone/AvailableTimeZones (do not include quotes)")
 
   if message.content.lower().startswith('!deltimezone'): #if the message starts with "!deltimezone"
-    if "publicTimeZones" in db.keys(): #if "publicTimeZones" exists (there is something in it)
-      delTimeZone = message[13:] #takes the text after "!deltimezone" and saves as a new string
+    delTimeZone = message.content[13:] #takes the text after "!deltimezone" and saves as a new string
+    if "publicTimeZones" in db.keys() and (delTimeZone in list(db["publicTimeZones"])): #if "publicTimeZones" exists (there is something in it)
       delete_publicTimeZones(delTimeZone) #sends "delTimeZone" the function "delete_publicTimeZones" (above) which removes "delTimeZone" from the list of saved time zones
-      await message.channel.send("Remaining public time zones:") #sends the list of remaining time zones in discord (broken rn)
-      await message.channel.send(allTimeZones)
+      await message.channel.send(delTimeZone + " has been deleted") #sends the list of remaining time zones in discord (broken rn)
+    else:
+      await message.channel.send('"' + delTimeZone + '"' + " is not in the list of time zones")
       
   if message.content.lower().startswith('!alltimes'): #sends the current time for all saved time zones in the "publicTimeZones" list
-    allPublicTimeZones = defaultPublicTimeZones
-    if "publicTimeZones" in db.keys():
-      allPublicTimeZones.extend(db["publicTimeZones"])
-    publicZoneString = " ".join(allPublicTimeZones)
-    for x in range(len(allPublicTimeZones)):
-      tempTimeZone = publicZoneString.split(" ")[x]
-      print(publicZoneString.split(" ")[x])
+    publicZoneString = " ".join(allTimeZones)
+
+    tempZoneList = publicZoneString.split(" ")
+    for i in range(len(allTimeZones)):
+      tempTimeZone = tempZoneList[i]
+      print(tempZoneList[i])
       tempTime = get_customTime(tempTimeZone)
       print("tempTimeZone: " + tempTimeZone)
       print("tempTime: " + tempTime)
