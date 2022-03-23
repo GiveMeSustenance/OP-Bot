@@ -37,6 +37,7 @@ Gets the time of a specific time zone.
 def get_customTime(timeZone):
   response = requests.get("https://www.timeapi.io/api/Time/current/zone?timeZone=" + timeZone)
   json_data = json.loads(response.text)
+  #print(json_data)
   time = json_data['time']
   return(time)
 
@@ -124,7 +125,7 @@ async def on_message(message): #when a message is sent to the discord server
   ''' 
   
   if message.content.lower().startswith('!ophelp'): #if the message starts with "!ophelp" (not case sensitive bc it sets all characters to lowercase --> .lower() )
-    await message.channel.send("**Current commands:**\n!ophelp\n!time [time zone]\n!alltimezones\n!alltimes\n!addtimezone [time zone] (no quotes)\n!deltimezone [time zone] (no quotes)\n!findtimezones\n!dadmode [true/false]\n!github") #sends a hard coded list of commands
+    await message.channel.send("**Current commands:**\n!ophelp\n!timein [time zone]\n!timezones\n!times\n!addtimezone [time zone] (no quotes)\n!deltimezone [time zone] (no quotes)\n!findtimezones (list of valid time zones)\n!dadmode [true/false]\n!github") #sends a hard coded list of commands
 
 #end !ophelp
 
@@ -172,19 +173,33 @@ async def on_message(message): #when a message is sent to the discord server
   Prints time of a specific input time zone on command
   '''
   
-  if message.content.lower().startswith('!time'): #if the message starts with "!time"
+  if message.content.lower().startswith('!timein'): #if the message starts with "!time"
     input = message.content #saves message as a string
     if input.find(' ') != -1 and len(input) >= 5: #checks to make sure it contains a space
-      customZone = message.content[6:] #takes the text after "!time" and saves as a new string
+      customZone = message.content[8:] #takes the text after "!time" and saves as a new string
       print("customZone: " + customZone) #prints the string to the console for troubleshoting --->
       time = get_customTime(customZone) #sends "customZone" the function "get_customTime" (above) and gets the time back
-      timeString = str(time) #makes the integer from "get_customTime" into a string
       print("time: " + time) #prints the string to console
-      await message.channel.send("It is " + timeString + " in " + customZone) #sends the time in a discord message
+      hour = time[:2]
+      minute = time[3:]
+      #print("hour: " + hour)
+      #print("minute: " + minute)
+      hour = int(hour)
+      period = " am"
+      if hour > 12:
+        hour = hour - 12
+        #print(hour)
+        period = " pm"
+      if hour == 12:
+        period = " pm"
+      #print("tempTimeZone: " + tempTimeZone)
+      #print("tempTime: " + tempTime)
+      hour = str(hour)
+      await message.channel.send("It is " + hour + ":" + minute + period + " in " + customZone)
     else: #if there is no space
       await message.channel.send("Please add a time zone: \n!addtimezone America/New_York \na list can be found at https://www.timeapi.io/api/TimeZone/AvailableTimeZones") #asks for a time zone and shows the syntax
 
-  if message.content.lower().startswith('!alltimezones'): #if the message starts with "!alltimezones"
+  if message.content.lower().startswith('!timezones'): #if the message starts with "!alltimezones"
     await message.channel.send("**All Time Zones:**")
     for i in range(0, len(allTimeZones)):
       await message.channel.send(str(i + 1) + ": " + str(allTimeZones[i]))
@@ -209,7 +224,7 @@ async def on_message(message): #when a message is sent to the discord server
     else:
       await message.channel.send('"' + delTimeZone + '"' + " is not in the list of time zones")
       
-  if message.content.lower().startswith('!alltimes'): #sends the current time for all saved time zones in the "publicTimeZones" list
+  if message.content.lower().startswith('!times'): #sends the current time for all saved time zones in the "publicTimeZones" list
     publicZoneString = " ".join(allTimeZones)
 
     tempZoneList = publicZoneString.split(" ")
@@ -217,9 +232,22 @@ async def on_message(message): #when a message is sent to the discord server
       tempTimeZone = tempZoneList[i]
       print(tempZoneList[i])
       tempTime = get_customTime(tempTimeZone)
-      print("tempTimeZone: " + tempTimeZone)
-      print("tempTime: " + tempTime)
-      await message.channel.send("It is " + tempTime + " in " + tempTimeZone)
+      hour = tempTime[:2]
+      minute = tempTime[3:]
+      #print("hour: " + hour)
+      #print("minute: " + minute)
+      hour = int(hour)
+      period = " am"
+      if hour > 12:
+        hour = hour - 12
+        #print(hour)
+        period = " pm"
+      if hour == 12:
+        period = " pm"
+      #print("tempTimeZone: " + tempTimeZone)
+      #print("tempTime: " + tempTime)
+      hour = str(hour)
+      await message.channel.send("It is " + hour + ":" + minute + period + " in " + tempTimeZone)
 
 keep_alive() #keeps the bot running by pinging the web server
 client.run(os.environ['Bot Token']) #allows the program to connect to the bot
