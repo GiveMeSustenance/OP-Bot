@@ -10,6 +10,9 @@ from keep_alive import keep_alive
 
 client = discord.Client()
 
+#del db["personal_times"]
+#print(db["personal_times"])
+
 defaultPublicTimeZones = [ #the hard coded time zones
  "America/New_York",
  "Asia/Singapore",
@@ -71,6 +74,31 @@ def delete_publicTimeZones(timeZone): #removes time zones from the public time z
 
 #end delete_publicTimeZones
 
+def add_personal_timezone(time_zone, user):
+  user = str(user)
+  #print(user)
+  #print(time_zone)
+  personal_time_zones = db["personal_times"]
+  #print(personal_time_zones)
+  personal_time_zones.append(user)
+  #print(personal_time_zones)
+  personal_time_zones.append(time_zone)
+  #print(personal_time_zones)
+  db["personal_times"] = personal_time_zones
+
+def to_12h_time(time):
+  hour = time[:2]
+  minute = time[3:]
+  hour = int(hour)
+  period = " am"
+  if hour > 12:
+    hour = hour - 12
+    period = " pm"
+  if hour == 12:
+    period = " pm"
+  twelve_hour_time = str(hour) + ":" + minute + period
+  return(twelve_hour_time)
+
 @client.event 
 async def on_ready(): #when the bot is ready
     print('Logged in as {0.user}'.format(client)) #prints to the console ----->
@@ -80,6 +108,9 @@ async def on_ready(): #when the bot is ready
     global dadMode #declaring the dadMode variable bc it was yelling at me in the check  
     dadMode = 0
     print("when the bot loads up: ", defaultPublicTimeZones)
+
+    if "personal_times" not in db.keys():
+      db["personal_times"] = [" "]
 
 '''
 @client.event #adds and removes roles on message reaction (broken)
@@ -180,22 +211,8 @@ async def on_message(message): #when a message is sent to the discord server
       print("customZone: " + customZone) #prints the string to the console for troubleshoting --->
       time = get_customTime(customZone) #sends "customZone" the function "get_customTime" (above) and gets the time back
       print("time: " + time) #prints the string to console
-      hour = time[:2]
-      minute = time[3:]
-      #print("hour: " + hour)
-      #print("minute: " + minute)
-      hour = int(hour)
-      period = " am"
-      if hour > 12:
-        hour = hour - 12
-        #print(hour)
-        period = " pm"
-      if hour == 12:
-        period = " pm"
-      #print("tempTimeZone: " + tempTimeZone)
-      #print("tempTime: " + tempTime)
-      hour = str(hour)
-      await message.channel.send("It is " + hour + ":" + minute + period + " in " + customZone)
+      time = to_12h_time(time)
+      await message.channel.send("It is " + time + " in " + customZone)
     else: #if there is no space
       await message.channel.send("Please add a time zone: \n!addtimezone America/New_York \na list can be found at https://www.timeapi.io/api/TimeZone/AvailableTimeZones") #asks for a time zone and shows the syntax
 
@@ -232,22 +249,31 @@ async def on_message(message): #when a message is sent to the discord server
       tempTimeZone = tempZoneList[i]
       print(tempZoneList[i])
       tempTime = get_customTime(tempTimeZone)
-      hour = tempTime[:2]
-      minute = tempTime[3:]
-      #print("hour: " + hour)
-      #print("minute: " + minute)
-      hour = int(hour)
-      period = " am"
-      if hour > 12:
-        hour = hour - 12
-        #print(hour)
-        period = " pm"
-      if hour == 12:
-        period = " pm"
-      #print("tempTimeZone: " + tempTimeZone)
-      #print("tempTime: " + tempTime)
-      hour = str(hour)
-      await message.channel.send("It is " + hour + ":" + minute + period + " in " + tempTimeZone)
+      twelve_hour_time = to_12h_time(tempTime)
+      await message.channel.send("It is " + twelve_hour_time + " in " + tempTimeZone)
 
+  if message.content.lower().startswith('!myzone'):
+    timeZone = message.content[8:]
+    print(timeZone)
+    if timeZone in time_zone_check:
+      if str(message.author) not in list(db["personal_times"]):
+        user_id = message.author
+        add_personal_timezone(timeZone, user_id)
+        print(db["personal_times"])
+      else:
+        await message.channel.send("you have already registered a time zone")
+    else:
+      await message.channel.send("that is not a valid time zone")
+      
+  if message.content.lower().startswith('!mytime'):
+    if str(message.author) in list(db["personal_times"]):
+      index = list(db["personal_times"]).index(str(message.author))
+      time_zone = db["personal_times"][index + 1]
+      time = get_customTime(time_zone)
+      await message.channel.send("it is " + time + " in " + time_zone)
+    else:
+      await message.channel.send("you do not have a time zone")
+
+    
 keep_alive() #keeps the bot running by pinging the web server
 client.run(os.environ['Bot Token']) #allows the program to connect to the bot
