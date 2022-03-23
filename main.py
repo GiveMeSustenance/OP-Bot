@@ -156,12 +156,12 @@ async def on_message(message): #when a message is sent to the discord server
   ''' 
   
   if message.content.lower().startswith('!ophelp'): #if the message starts with "!ophelp" (not case sensitive bc it sets all characters to lowercase --> .lower() )
-    await message.channel.send("**Current commands:**\n!ophelp\n!timein [time zone]\n!timezones\n!times\n!addtimezone [time zone] (no quotes)\n!deltimezone [time zone] (no quotes)\n!findtimezones (list of valid time zones)\n!dadmode [true/false]\n!github") #sends a hard coded list of commands
+    await message.channel.send("**Current commands:**\n!ophelp\n!timein [time zone]\n!timezones\n!times\n!addtimezone [time zone] (no quotes)\n!deltimezone [time zone] (no quotes)\n!findtimezones (list of valid time zones)\n!myzone [time zone]\n!mytime\n!dadmode [true/false]\n!github") #sends a hard coded list of commands
 
 #end !ophelp
 
   if message.content.lower().startswith("!findtimezones"): #if the message starts with "!github"
-    await message.channel.send("A list of time zones can be found at https://www.timeapi.io/api/TimeZone/AvailableTimeZones") #sends the link
+    await message.channel.send("A list of time zones can be found at https://www.timeapi.io/Tools/TimeZoneMap") #sends the link
   
   updateRoles = 0
   
@@ -214,7 +214,7 @@ async def on_message(message): #when a message is sent to the discord server
       time = to_12h_time(time)
       await message.channel.send("It is " + time + " in " + customZone)
     else: #if there is no space
-      await message.channel.send("Please add a time zone: \n!addtimezone America/New_York \na list can be found at https://www.timeapi.io/api/TimeZone/AvailableTimeZones") #asks for a time zone and shows the syntax
+      await message.channel.send("Please add a time zone: \n!addtimezone America/New_York \na list can be found at https://www.timeapi.io/Tools/TimeZoneMap") #asks for a time zone and shows the syntax
 
   if message.content.lower().startswith('!timezones'): #if the message starts with "!alltimezones"
     await message.channel.send("**All Time Zones:**")
@@ -231,7 +231,7 @@ async def on_message(message): #when a message is sent to the discord server
       else:
         await message.channel.send(newTimeZone + " is alredy added")
     else:
-      await message.channel.send("That is not a valid time zone. Please pick one from https://www.timeapi.io/api/TimeZone/AvailableTimeZones (do not include quotes)")
+      await message.channel.send("That is not a valid time zone. Please pick one from https://www.timeapi.io/Tools/TimeZoneMap (do not include quotes)")
 
   if message.content.lower().startswith('!deltimezone'): #if the message starts with "!deltimezone"
     delTimeZone = message.content[13:] #takes the text after "!deltimezone" and saves as a new string
