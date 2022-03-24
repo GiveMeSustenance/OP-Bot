@@ -3,12 +3,14 @@ import discord
 import requests
 import json
 from discord.ext import commands
-from discord.utils import get
 from all_time_zones import time_zone_check
 from replit import db
 from keep_alive import keep_alive
+import random
 
 client = discord.Client()
+
+bot = commands.Bot(command_prefix='!')
 
 #del db["personal_times"]
 #print(db["personal_times"])
@@ -112,31 +114,42 @@ async def on_ready(): #when the bot is ready
     if "personal_times" not in db.keys():
       db["personal_times"] = [" "]
 
-'''
 @client.event #adds and removes roles on message reaction (broken)
 async def on_raw_reaction_add(payload):
-  guild = client.get_guild(payload.guild_id)
-  print(guild)
-  #print("Reaction added: ", payload)
   if payload.channel_id == 913704059758845952: #roles channel
-    print("-----\nRoles\n-----")
+    member = payload.member
     if payload.emoji.id == 914002544601231390: #:pigman: emoji
-      print("-----\nPigman\n-----")
-      role = discord.utils.get(guild.roles, name="Pigman")
-      await payload.member.add_roles(role)
+      role = discord.utils.get(payload.member.guild.roles, name = "Pigman")
+    if payload.emoji.id == 914004603647955064: #:fight: emoji
+      role = discord.utils.get(payload.member.guild.roles, name = "Forge Lovers")
+    if payload.emoji.id == 916441731090767903: #:farm: emoji
+      role = discord.utils.get(payload.member.guild.roles, name = "Gorge Lovers")
+    if payload.emoji.id == 916113183553507358: #:skull~1: emoji
+      role = discord.utils.get(payload.member.guild.roles, name = "Rat Hater")
+    if payload.emoji.id == 916432312642728036: #:shovel: emoji
+      role = discord.utils.get(payload.member.guild.roles, name = "Terraria Enthusiast")
+    if payload.emoji.id == 916441840633393202: #:shovel: emoji
+      role = discord.utils.get(payload.member.guild.roles, name = "Poll Taker")
+    await member.add_roles(role)
  
 @client.event
-async def on_raw_reaction_remove(reaction):
-  guild = discord.utils.find(lambda g: g.id == reaction.guild_id, bot.guilds)
-  if reaction.channel_id == 913704059758845952: #roles channel
-    if reaction.emoji.id == 914002544601231390: #:pigman: emoji
-      role = discord.utils.get(guild.roles, name="Pigman")
-      member = discord.utils.find(lambda m: m.id == reaction.user_id, guild.members)
-      if member is not None:
-        await member.remove_roles(role)
-      
-  print("Reaction removed")
-'''
+async def on_raw_reaction_remove(payload):
+  if payload.channel_id == 913704059758845952: #roles channel
+    guild = await client.fetch_guild(payload.guild_id)
+    member = await guild.fetch_member(payload.user_id)
+    if payload.emoji.id == 914002544601231390: #:pigman: emoji
+      role = discord.utils.get(guild.roles, name = "Pigman")
+    if payload.emoji.id == 914004603647955064: #:fight: emoji
+      role = discord.utils.get(guild.roles, name = "Forge Lovers")
+    if payload.emoji.id == 916441731090767903: #:farm: emoji
+      role = discord.utils.get(guild.roles, name = "Gorge Lovers")
+    if payload.emoji.id == 916113183553507358: #:skull~1: emoji
+      role = discord.utils.get(guild.roles, name = "Rat Hater")
+    if payload.emoji.id == 916432312642728036: #:shovel: emoji
+      role = discord.utils.get(guild.roles, name = "Terraria Enthusiast")
+    if payload.emoji.id == 916441840633393202: #:shovel: emoji
+      role = discord.utils.get(guild.roles, name = "Poll Taker")
+    await member.remove_roles(role)
 
 @client.event
 async def on_message(message): #when a message is sent to the discord server
@@ -156,10 +169,16 @@ async def on_message(message): #when a message is sent to the discord server
   ''' 
   
   if message.content.lower().startswith('!ophelp'): #if the message starts with "!ophelp" (not case sensitive bc it sets all characters to lowercase --> .lower() )
-    await message.channel.send("**Current commands:**\n!ophelp\n!timein [time zone]\n!timezones\n!times\n!addtimezone [time zone] (no quotes)\n!deltimezone [time zone] (no quotes)\n!findtimezones (list of valid time zones)\n!myzone [time zone]\n!mytime\n!dadmode [true/false]\n!github") #sends a hard coded list of commands
+    await message.channel.send("**Current commands:**\n!ophelp\n!timein [time zone]\n!timezones\n!times\n!addtimezone [time zone] (no quotes)\n!deltimezone [time zone] (no quotes)\n!findtimezones (list of valid time zones)\n!myzone [time zone]\n!mytime\n!roll\n!dadmode [true/false]\n!github") #sends a hard coded list of commands
 
 #end !ophelp
 
+  if message.content.lower().startswith('!pigman'):
+    member = message.author
+    print(member)
+    var = discord.utils.get(message.guild.roles, name = "Pigman")
+    await member.add_roles(var)
+  
   if message.content.lower().startswith("!findtimezones"): #if the message starts with "!github"
     await message.channel.send("A list of time zones can be found at https://www.timeapi.io/Tools/TimeZoneMap") #sends the link
   
@@ -203,6 +222,10 @@ async def on_message(message): #when a message is sent to the discord server
   '''
   Prints time of a specific input time zone on command
   '''
+
+  if message.content.lower().startswith("!roll"):
+    roll_number = str(random.randint(0,100))
+    await message.channel.send(str(message.author) + " rolls " + roll_number)
   
   if message.content.lower().startswith('!timein'): #if the message starts with "!time"
     input = message.content #saves message as a string
