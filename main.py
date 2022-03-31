@@ -263,7 +263,7 @@ async def on_message(message):
   ''' 
   
   if discord_message.lower().startswith('!ophelp'):
-    await message.channel.send("**Current commands:**\n!ophelp\n!timein [time zone]\n!timezones\n!times\n!addtimezone [time zone] (no quotes)\n!deltimezone [time zone] (no quotes)\n!findtimezones (list of valid time zones)\n!myzone [time zone]\n!mytime\n!roll\n!dadmode [true/false]\n!github")
+    await message.channel.send("**Current commands:**\n!ophelp\n!timein [time zone]\n!timezones\n!times\n!addtimezone [time zone] (no quotes)\n!deltimezone [time zone] (no quotes)\n!findtimezones (list of valid time zones)\n!myzone [time zone]\n!mytime\n!pigman\n!convert [time] (13:00)\n!roll\n!dadmode [true/false]\n!github")
 
 #end !ophelp -------------------------------------------------------------------------------------------------------------------------------------------------------------
 
