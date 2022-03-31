@@ -52,6 +52,7 @@ converts the input time to another time zone
 def convert_time(request_body):
   response = requests.post("https://www.timeapi.io/api/Conversion/ConvertTimeZone", json = request_body)
   json_data = json.loads(response.text)
+  print(json_data)
   converted_time = json_data['conversionResult']['time']
   return(converted_time)
 
@@ -162,16 +163,19 @@ converts a time to twelve hour and returns it
 
 def to_12h_time(time):
   hour = time[:2]
+  print(hour)
   minute = time[3:]
+  print(minute)
   hour = int(hour)
   period = " am"
-  if hour > 12:
-    hour = hour - 12
+  if hour == 24:
+    hour -= 12
+    period = " am"
+  elif hour > 12:
+    hour -= 12
     period = " pm"
-  if hour == 12:
+  elif hour == 12:
     period = " pm"
-  if hour < 1:
-    hour += 12
   twelve_hour_time = str(hour) + ":" + minute + period
   return(twelve_hour_time)
 
@@ -245,9 +249,9 @@ async def on_message(message):
 
   discord_message = message.content
   
-  allTimeZones = default_public_time_zones
+  all_time_zones = default_public_time_zones
   if "publicTimeZones" in db.keys():
-    allTimeZones = allTimeZones + list(db["publicTimeZones"])
+    all_time_zones = all_time_zones + list(db["publicTimeZones"])
     
   if message.author == client.user:
     return
@@ -344,8 +348,8 @@ async def on_message(message):
   
   if discord_message.lower().startswith('!timezones'): #if the message starts with "!alltimezones"
     await message.channel.send("**All Time Zones:**")
-    for i in range(0, len(allTimeZones)):
-      await message.channel.send(str(i + 1) + ": " + str(allTimeZones[i]))
+    for i in range(0, len(all_time_zones)):
+      await message.channel.send(str(i + 1) + ": " + str(all_time_zones[i]))
 
 #end !timezones -------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -356,7 +360,7 @@ async def on_message(message):
   if discord_message.lower().startswith('!addtimezone'): #if the message starts with "!addtimezone"
     newTimeZone = discord_message[13:] #takes the text after "!addtimezone" and saves as a new string
     if newTimeZone in time_zone_check:
-      if newTimeZone not in allTimeZones:
+      if newTimeZone not in all_time_zones:
         print(newTimeZone) #prints it to the console
         update_public_time_zones(newTimeZone) #sends "newTimeZone" the function "update_public_time_zones" (above) which adds "newTimeZone" to the list of saved time zones
         await message.channel.send(newTimeZone + " was added to the public time zones!") #sends a discord message to show it was added
@@ -386,10 +390,10 @@ async def on_message(message):
   '''
       
   if discord_message.lower().startswith('!times'): #sends the current time for all saved time zones in the "publicTimeZones" list
-    publicZoneString = " ".join(allTimeZones)
+    publicZoneString = " ".join(all_time_zones)
 
     tempZoneList = publicZoneString.split(" ")
-    for i in range(len(allTimeZones)):
+    for i in range(len(all_time_zones)):
       tempTimeZone = tempZoneList[i]
       print(tempZoneList[i])
       tempTime = get_custom_time(tempTimeZone)
@@ -450,39 +454,37 @@ async def on_message(message):
   '''
   responds to times mentioned in discord (only 12 hour with an am/pm) and sends the corresponding time in all saves public time zones
   '''
-    
-  if any(char.isdigit() for char in discord_message):
+  
+  if not discord_message.startswith("!") and any(char.isdigit() for char in discord_message):
     index = [char.isdigit() for char in discord_message].index(True)
-    input_time = discord_message[index]
+    display_time = discord_message[index]
+    time = discord_message[index]
     if discord_message[index + 1].isdigit(): #allows for 2 digit times
-      input_time = discord_message[index:index + 2]
-      print(input_time)
+      print("2-digit")
+      time = discord_message[index:index + 2]
     contains_am_pm = discord_message[index:index + 5].lower()
-    if "am" in contains_am_pm or "pm" in contains_am_pm:
-      if "am" in contains_am_pm:
-        print("has am")
-        am_pm = "am"
-      else:
-        print("has pm")
-        am_pm = "pm"
+    if "am" in contains_am_pm:
+      print("has am")
+      am_pm = "am"
+    elif "pm" in contains_am_pm:
+      print("has pm")
+      am_pm = "pm"
       if str(message.author) in list(db["personal_times"]):
-        #print("personal time zone exists")
+        print("personal time zone exists")
         personal_time_zone_index = list(db["personal_times"]).index(str(message.author)) + 1
         author_time_zone = db["personal_times"][personal_time_zone_index]
+      
         date_time = get_dateTime(author_time_zone)
         date = date_time[:10]
-        if int(input_time) < 10:
-          time = "0" + input_time
         if am_pm == "pm":
-          time = int(input_time) + 12
-        else:
-          time = input_time
+          time = int(time) + 12
+        if int(time) < 10:
+          time = "0" + time
         time = str(time) + ":00:00"
         date_time = date + " " + time
-        #print(date_time)
         
-        for i in range(len(allTimeZones)):
-          to_time_zone = allTimeZones[i]
+        for i in range(len(all_time_zones)):
+          to_time_zone = all_time_zones[i]
           request_body = {
             "fromTimeZone": author_time_zone,
             "dateTime": date_time,
@@ -492,13 +494,15 @@ async def on_message(message):
           #print(request_body)
           converted_time = convert_time(request_body)
           print(converted_time)
-          #add if converted time < 1 or converted time > 12
           converted_time = to_12h_time(converted_time)
-          await message.channel.send(input_time + " " + am_pm + " in **" + author_time_zone + "** is " + converted_time + " in **" + to_time_zone + "**")
+          await message.channel.send(display_time + " " + am_pm + " in **" + author_time_zone + "** is " + converted_time + " in **" + to_time_zone + "**")
       else:
         await message.channel.send("Add a personal time zone with **!myzone [time zone]** to allow for auto replies")
 
 #end time responder ---------------------------------------------------------------------------------------------------------------------------------------------------------
-    
+  if discord_message.lower().startswith("!convert"):
+    time = discord_message[9:]
+    time = to_12h_time(time)
+    await message.channel.send(time)
 keep_alive() #keeps the bot running by pinging the web server
 client.run(os.environ['Bot Token']) #allows the program to connect to the bot
