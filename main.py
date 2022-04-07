@@ -15,10 +15,12 @@ bot = commands.Bot(command_prefix='!')
 #del db["personal_times"]
 #print(db["personal_times"])
 
+#del db["time_response_toggle"]
+#print(db["time_response_toggle"])
+
 dad_toggle = False
 
 default_public_time_zones = [ #the hard coded time zones
- "America/New_York",
  "Asia/Singapore",
  "America/Toronto"
 ]
@@ -52,7 +54,6 @@ converts the input time to another time zone
 def convert_time(request_body):
   response = requests.post("https://www.timeapi.io/api/Conversion/ConvertTimeZone", json = request_body)
   json_data = json.loads(response.text)
-  print(json_data)
   converted_time = json_data['conversionResult']['time']
   return(converted_time)
 
@@ -137,25 +138,6 @@ def add_personal_time_zone(time_zone, user):
     db["personal_times"] = personal_time_zones
 
 #end add_personal_time_zone
-
-'''
-adds the user to a list of users the bot will respond to when they send a time (ie. 12 pm)
-'''
-    
-def toggle_personal_time_response(user, boolean):
-  if "personal_response_toggle" in db.keys():
-    user = str(user)
-    personal_response_toggle = db["personal_response_toggle"]
-    personal_response_toggle.append(user)
-    personal_response_toggle.append(boolean)
-    db["personal_response_toggle"] = personal_response_toggle
-  else:
-    db["personal_response_toggle"] = user
-    personal_response_toggle = db["personal_response_toggle"]
-    personal_response_toggle.append(boolean)
-    db["personal_response_toggle"] = personal_response_toggle
-
-#end toggle_personal_time_response
 
 '''
 converts a time to twelve hour and returns it
@@ -256,16 +238,41 @@ async def on_message(message):
   if message.author == client.user:
     return
 
-# -------------------------------------------------------------------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------------------------------------------------------
 
   ''' 
   Sends a list of current commands and their arguments on command
   ''' 
+
+  command_help = {
+    "ophelp": "lists of all commands the bot can do",
+    "timein": "finds the current time in a specified time zone: !timein America/Toronto",
+    "timezones": "sends all the time zones the bot is storing",
+    "times": "sends the current times in all time zones the bot is storing",
+    "addtimezone": "adds a time zone to the bot's list: !addtimezone America/Toronto",
+    "deltimezone": "deletes a time zone from the bots list: !deltimezone America/Toronto",
+    "findtimezones": "links a map to find valid time zones",
+    "myzone": "sets a personal time zone to use with !mytime, !convert, and automatic time responses: !myzone America/Toronto",
+    "mytime": "sends the time in your personal time zone",
+    "pigman": "gives you the pigman role",
+    "convert": "converts a 24 hour time from your personal time zone to all time zones in the bot's list: !convert 13:00",
+    "roll": "rolls a random number. Add a number after to roll between 0 and that number (default 100): !roll or !roll 420",
+    "coinflip": "flips a coin and tells you how it lands",
+    "dadmode": "toggles dad mode (Hi hungry, I'm dad!): !dadmode true/false",
+    "github": "sends the link to the github page with all the bot's code",
+    "timeresponse": "toggles whether the bot will convert times you post in chat to time zones from its list"
+  }
   
   if discord_message.lower().startswith('!ophelp'):
-    await message.channel.send("**Current commands:**\n!ophelp\n!timein [time zone]\n!timezones\n!times\n!addtimezone [time zone] (no quotes)\n!deltimezone [time zone] (no quotes)\n!findtimezones (list of valid time zones)\n!myzone [time zone]\n!mytime\n!pigman\n!convert [time] (13:00)\n!roll\n!dadmode [true/false]\n!github")
+    if discord_message[8:].strip() == "":
+      await message.channel.send("**Help Commands:**\n!ophelp\n\n**Time Commands:**\n!timein [time zone]\n!timezones\n!times\n!addtimezone [time zone]\n!deltimezone [time zone]\n!findtimezones\n!myzone [time zone]\n!mytime\n!convert [time]\n!timeresponse [true/false]\n\n**Fun Commands**\n!pigman\n!roll\n!coinflip\n!dadmode [true/false]\n!github\n\n**Need more info? do !ophelp [command] (!ophelp times)**")
+    else:
+      print(discord_message[8:])
+      await message.channel.send("!" + discord_message[8:] + " " + command_help[discord_message[8:]])
 
-#end !ophelp -------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    
+#end !ophelp --------------------------------------------------------------------------------------------------------------------------------------
 
   if discord_message.lower().startswith('!pigman'):
     member = message.author
@@ -273,12 +280,12 @@ async def on_message(message):
     var = discord.utils.get(message.guild.roles, name = "Pigman")
     await member.add_roles(var)
 
-#end !pigman -------------------------------------------------------------------------------------------------------------------------------------------------------------
+#end !pigman --------------------------------------------------------------------------------------------------------------------------------------
   
   if discord_message.lower().startswith("!findtimezones"):
     await message.channel.send("A list of time zones can be found at https://www.timeapi.io/Tools/TimeZoneMap")
 
-#end !findtimezones -------------------------------------------------------------------------------------------------------------------------------------------------------
+#end !findtimezones -------------------------------------------------------------------------------------------------------------------------------
   
   updateRoles = 0
   
@@ -286,7 +293,7 @@ async def on_message(message):
     channelID = client.get_channel(913704059758845952) #roles channel
     await channelID.send("**React with the emoji to get the role and be notified when it is pinged**\nPoll Taker: <:heart:916441840633393202>\nForge Lover: <:fight:914004603647955064>\nGorge Lover: <:farm:916441731090767903>\nRat Hater (Uncompromising Mode): <:skull:916113183553507358>\nTerraria Enthusiast: <:shovel:916432312642728036>\n")
   
-#end !updaterolechannel --------------------------------------------------------------------------------------------------------------------------------------------------
+#end !updaterolechannel ---------------------------------------------------------------------------------------------------------------------------
 
   '''
   Toggles Dad Mode (on/off)
@@ -305,7 +312,7 @@ async def on_message(message):
       dadMessage = discord_message[3:]
       await message.channel.send("Hi " + dadMessage + ", I'm OP Bot")
 
-#end !dadmode -------------------------------------------------------------------------------------------------------------------------------------------------------------
+#end !dadmode -------------------------------------------------------------------------------------------------------------------------------------
 
   '''
   Prints the GitHub link on command
@@ -314,7 +321,7 @@ async def on_message(message):
   if discord_message.lower().startswith("!github"):
     await message.channel.send("https://github.com/GiveMeSustenance/OP-Bot")
 
-#end !github -------------------------------------------------------------------------------------------------------------------------------------------------------------
+#end !github --------------------------------------------------------------------------------------------------------------------------------------
 
   if discord_message.lower().startswith("!roll"):
     max_range = 100
@@ -324,7 +331,7 @@ async def on_message(message):
     roll_number = str(random.randint(0,max_range))
     await message.channel.send(str(message.author) + " rolls " + roll_number)
 
-#end !roll -------------------------------------------------------------------------------------------------------------------------------------------------------------
+#end !roll ----------------------------------------------------------------------------------------------------------------------------------------
 
   '''
   Prints time of a specific input time zone on command
@@ -340,7 +347,7 @@ async def on_message(message):
     else:
       await message.channel.send("Please add a time zone: \n!addtimezone America/New_York \na list can be found at https://www.timeapi.io/Tools/TimeZoneMap")
 
-#end !timein -------------------------------------------------------------------------------------------------------------------------------------------------------------
+#end !timein ---------------------------------------------------------------------------------------------------------------------------------------
   
   '''
   Prints all saved time zones on command
@@ -351,7 +358,7 @@ async def on_message(message):
     for i in range(0, len(all_time_zones)):
       await message.channel.send(str(i + 1) + ": " + str(all_time_zones[i]))
 
-#end !timezones -------------------------------------------------------------------------------------------------------------------------------------------------------------
+#end !timezones -----------------------------------------------------------------------------------------------------------------------------------
 
   '''
   adds a time zone to the saved public list on command
@@ -369,7 +376,7 @@ async def on_message(message):
     else:
       await message.channel.send("That is not a valid time zone. Please pick one from https://www.timeapi.io/Tools/TimeZoneMap (do not include quotes)")
 
-#end !addtimezone --------------------------------------------------------------------------------------------------------------------------------------------------------
+#end !addtimezone --------------------------------------------------------------------------------------------------------------------------------
 
   '''
   deletes a time zone from the saved public list on command
@@ -383,7 +390,7 @@ async def on_message(message):
     else:
       await message.channel.send('"' + delTimeZone + '"' + " is not in the list of time zones")
 
-#end !deltimezone ---------------------------------------------------------------------------------------------------------------------------------------------------------
+#end !deltimezone ---------------------------------------------------------------------------------------------------------------------------------
 
   '''
   sends the times in all saved public time zones to discord on command
@@ -400,7 +407,7 @@ async def on_message(message):
       twelve_hour_time = to_12h_time(tempTime)
       await message.channel.send("It is " + twelve_hour_time + " in " + tempTimeZone)
 
-#end !times -------------------------------------------------------------------------------------------------------------------------------------------------------------
+#end !times ---------------------------------------------------------------------------------------------------------------------------------------
 
   '''
   saves a personal time zone for the user in a list (user, time zone) on command
@@ -419,7 +426,7 @@ async def on_message(message):
     else:
       await message.channel.send("that is not a valid time zone")
 
-#end !myzone -------------------------------------------------------------------------------------------------------------------------------------------------------------
+#end !myzone --------------------------------------------------------------------------------------------------------------------------------------
 
   '''
   sends the time in the users personal time zone to discord on command
@@ -435,40 +442,63 @@ async def on_message(message):
     else:
       await message.channel.send("you do not have a time zone")
 
-#end !mytime -------------------------------------------------------------------------------------------------------------------------------------------------------------
+#end !mytime --------------------------------------------------------------------------------------------------------------------------------------
 
   '''
   toggles whether the bot responds to times mentioned by the user in discord
   '''
   
   if discord_message.lower().startswith("!timeresponse"):
-    time_response_toggle = discord_message[14:]
-    time_response_toggle = parse_boolean(time_response_toggle)
-    if time_response_toggle == True:
-      do_not_time_respond = db["do_not_time_respond"]
-      do_not_time_respond.extend()
-      db["do_not_time_respond"] = do_not_time_respond
-
-#end !timeresponse -------------------------------------------------------------------------------------------------------------------------------------------------------
+    true_false = discord_message[14:]
+    true_false = parse_boolean(true_false)
+    author = str(message.author)
+    if "time_response_toggle" in db.keys():
+      print("in keys")
+      if true_false == True:
+        print("true")
+        if author not in db["time_response_toggle"]:
+          print(author + ' not in db["time_response_toggle"]')
+          db["time_response_toggle"].append(author)
+          await message.channel.send("Time responses enabled")
+        else:
+          await message.channel.send("You have already enabled this")
+      else:
+        if author in db["time_response_toggle"]:
+          db["time_response_toggle"].remove(author)
+          await message.channel.send("Time responses disabled")
+        else:
+          await message.channel.send("you have already disabled this")
+    else:
+      if true_false == True:
+        print("not in keys")
+        db["time_response_toggle"] = []
+        db["time_response_toggle"].append(author)
+        print(db["time_response_toggle"])
+        await message.channel.send("Time responses enabled")
+      else:
+        await message.channel.send("you have already disabled this")
+      
+#end !timeresponse --------------------------------------------------------------------------------------------------------------------------------
 
   '''
   responds to times mentioned in discord (only 12 hour with an am/pm) and sends the corresponding time in all saves public time zones
   '''
   
-  if not discord_message.startswith("!") and any(char.isdigit() for char in discord_message):
+  if str(message.author) in db["time_response_toggle"] and not discord_message.startswith("!") and any(char.isdigit() for char in discord_message):
     index = [char.isdigit() for char in discord_message].index(True)
     display_time = discord_message[index]
     time = discord_message[index]
     if discord_message[index + 1].isdigit(): #allows for 2 digit times
       print("2-digit")
       time = discord_message[index:index + 2]
-    contains_am_pm = discord_message[index:index + 5].lower()
-    if "am" in contains_am_pm:
-      print("has am")
-      am_pm = "am"
-    elif "pm" in contains_am_pm:
-      print("has pm")
-      am_pm = "pm"
+    contains_am_pm = discord_message[index:index + 8].lower()
+    if "am" in contains_am_pm or "pm" in contains_am_pm:
+      if "am" in contains_am_pm:
+        print("has am")
+        am_pm = "am"
+      elif "pm" in contains_am_pm:
+        print("has pm")
+        am_pm = "pm"
       if str(message.author) in list(db["personal_times"]):
         print("personal time zone exists")
         personal_time_zone_index = list(db["personal_times"]).index(str(message.author)) + 1
@@ -499,10 +529,30 @@ async def on_message(message):
       else:
         await message.channel.send("Add a personal time zone with **!myzone [time zone]** to allow for auto replies")
 
-#end time responder ---------------------------------------------------------------------------------------------------------------------------------------------------------
+#end time responder -------------------------------------------------------------------------------------------------------------------------------
   if discord_message.lower().startswith("!convert"):
     time = discord_message[9:]
     time = to_12h_time(time)
     await message.channel.send(time)
+
+#end time responder -------------------------------------------------------------------------------------------------------------------------------
+
+  if discord_message.lower().startswith("!coinflip"):
+    flip_result = random.randint(0,1)
+    if flip_result == 0:
+      flip_result = "Heads"
+    else:
+      flip_result = "Tails"
+    await message.channel.send("It's " + flip_result + "!")
+
+#end time !coinflip -------------------------------------------------------------------------------------------------------------------------------
+    
+  #checks if the message contains the skull emoji
+  if "<:skull:916113183553507358>" in discord_message: 
+    #if found at least once, send funny skeletons gif
+    await message.channel.send("https://tenor.com/view/sans-undertale-papyrus-gif-10107813")
+
+#end papyrus-sans gif appender -----------------------------------------------------------------------
+    
 keep_alive() #keeps the bot running by pinging the web server
 client.run(os.environ['Bot Token']) #allows the program to connect to the bot
