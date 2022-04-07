@@ -504,5 +504,16 @@ async def on_message(message):
     time = discord_message[9:]
     time = to_12h_time(time)
     await message.channel.send(time)
+    
+    
+#end convert ------------------------------------------------------------------------------------------------
+
+  #checks if the message contains the skull emoji
+  if "💀" in discord_message: 
+    #if found at least once, send funny skeletons gif
+    await message.channel.send("https://tenor.com/view/sans-undertale-papyrus-gif-10107813")
+   
+#end papyrus-sans gif appender -----------------------------------------------------------------------
+    
 keep_alive() #keeps the bot running by pinging the web server
 client.run(os.environ['Bot Token']) #allows the program to connect to the bot
