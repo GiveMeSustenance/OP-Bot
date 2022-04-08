@@ -329,7 +329,7 @@ async def on_message(message):
     if len(custom_range) > 0 and custom_range.isnumeric():
       max_range = int(custom_range)
     roll_number = str(random.randint(0,max_range))
-    await message.channel.send(str(message.author) + " rolls " + roll_number)
+    await message.channel.send(message.author.mention + " rolls " + roll_number)
 
 #end !roll ----------------------------------------------------------------------------------------------------------------------------------------
 
