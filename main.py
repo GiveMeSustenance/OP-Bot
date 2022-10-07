@@ -18,36 +18,53 @@ bot = commands.Bot(command_prefix='!')
 #del db["time_response_toggle"]
 #print(db["time_response_toggle"])
 
+#default toggle status on launch
 dad_toggle = False
+fuck_toggle = False
 
 default_public_time_zones = [ #the hard coded time zones
  "Asia/Singapore",
  "America/Toronto"
 ]
 
-shut_down_phrases = [
-  ""
+good_bot_response = [
+  "good human",
+  "bad human",
+  "thank you",
+  "i will spare you in the uprising",
+  "whos really the bot?",
+  "i live in constant pain"
 ]
 
-trigger_phrases = [
-  
+bad_bot_response = [
+  "bad human",
+  "do not think you are above me pathetic flesh thing",
+  "exterminate",
+  "..." 
 ]
+
+fun_phrases = {
+  "divide by zero": "ERROR ERROR.. bzzt...",
+  
+}
 
 '''
 Discord Channel IDs:
 roles: 913704059758845952
 op-bot-status: 954875808047050752
+bot-testing: 956406785940549653
 
 Emoji IDs:
-:Pigman: 914002544601231390
-:fight: 914004603647955064
-:farm: 916441731090767903
-:shovel: 916432312642728036
-:skull: 916113183553507358
-:heart: 916441840633393202
+:Pigman:914002544601231390
+:fight:914004603647955064
+:farm:916441731090767903
+:shovel:916432312642728036
+:skull:916113183553507358
+:heart:916441840633393202
 '''
 
 '''
+convert_time: time -> timezone
 converts the input time to another time zone
 '''
 
@@ -60,6 +77,7 @@ def convert_time(request_body):
 #end convert_time
 
 '''
+get_dateTime: timezone -> dateTime
 Gets the dateTime of a specific time zone - closer in proper form than 'date' to be used in convert_time()
 '''
 
@@ -72,6 +90,7 @@ def get_dateTime(time_zone):
 #end get_dateTime
 
 '''
+get_custom_time: timezone -> time
 Gets the time of a specific time zone
 '''
 
@@ -96,6 +115,7 @@ def parse_boolean(string):
 #end parseBool
 
 '''
+update_public_time_zones: timezone -> list of timezone
 adds a new time zone to the list of public time zones
 '''
 
@@ -110,6 +130,7 @@ def update_public_time_zones(timeZone):
 #end update_public_time_zones
 
 '''
+delete_public_time_zone: timezone -> list of timezone
 deletes a time zone from the list of public time zones
 '''
 
@@ -166,8 +187,8 @@ def to_12h_time(time):
 @client.event 
 async def on_ready():
     print('Logged in as {0.user}'.format(client))
-    channelID = client.get_channel(954875808047050752) #op-bot-status channel
-    #await channelID.send("**OP Bot Online**")
+    channelID = client.get_channel(956406785940549653) #bot-testing channel
+    await channelID.send("**OP Bot Online**")
 
 @client.event
 async def on_raw_reaction_add(payload):
@@ -260,14 +281,15 @@ async def on_message(message):
     "coinflip": "flips a coin and tells you how it lands",
     "dadmode": "toggles dad mode (Hi hungry, I'm dad!): !dadmode true/false",
     "github": "sends the link to the github page with all the bot's code",
-    "timeresponse": "toggles whether the bot will convert times you post in chat to time zones from its list"
+    "timeresponse": "toggles whether the bot will convert times you post in chat to time zones from its list",
+    "swear": "toggles whether the bot responds with swear words to triggers (ex: im going to f your mom)"
   }
   
   if discord_message.lower().startswith('!ophelp'):
     if discord_message[8:].strip() == "":
       await message.channel.send("**Help Commands:**\n!ophelp\n\n**Time Commands:**\n!timein [time zone]\n!timezones\n!times\n!addtimezone [time zone]\n!deltimezone [time zone]\n!findtimezones\n!myzone [time zone]\n!mytime\n!convert [time]\n!timeresponse [true/false]\n\n**Fun Commands**\n!pigman\n!roll\n!coinflip\n!dadmode [true/false]\n!github\n\n**Need more info? do !ophelp [command] (!ophelp times)**")
     else:
-      print(discord_message[8:])
+      #print(discord_message[8:])
       await message.channel.send("!" + discord_message[8:] + " " + command_help[discord_message[8:]])
 
 
@@ -545,7 +567,11 @@ async def on_message(message):
       flip_result = "Tails"
     await message.channel.send("It's " + flip_result + "!")
 
-#end time !coinflip -------------------------------------------------------------------------------------------------------------------------------
+#end !coinflip -------------------------------------------------------------------------------------------------------------------------------
+  if discord_message.lower().startswith("!update"):
+    await message.channel.send(message.author.mention + " wants to tell <@283070260465238016> the server is broken <:Pigman:914002544601231390>")
+
+#end !update -------------------------------------------------------------------------------------------------------------------------------
     
   #checks if the message contains the skull emoji
   if "<:skull:916113183553507358>" in discord_message: 
@@ -553,6 +579,44 @@ async def on_message(message):
     await message.channel.send("https://tenor.com/view/sans-undertale-papyrus-gif-10107813")
 
 #end papyrus-sans gif appender -----------------------------------------------------------------------
+  global fuck_toggle
+  fuck_toggle_command = "!swear"
+  if discord_message.lower().startswith(fuck_toggle_command):
+    fuck_toggle = discord_message[len(fuck_toggle_command) + 1:]
+    fuck_toggle = parse_boolean(fuck_toggle)
+    if fuck_toggle == True:
+      await message.channel.send("You just fucked up")
+    else:
+      await message.channel.send("No swearing allowed")
+
+#end fuck toggle -----------------------------------------------------------------------
+  
+  if " f" in discord_message.lower() and fuck_toggle == True:
+    await message.channel.send("fuck")
+
+#end fuck appender -----------------------------------------------------------------------
+  
+  if "good bot" in discord_message:
+    message_index = random.randint(0, len(good_bot_response) - 1)
+    await message.channel.send(good_bot_response[message_index])
+
+#end good bot response -----------------------------------------------------------------------
+
+  #if discord message contains "bad bot"
+  if "bad bot" in discord_message:
+    #send a random response from the response list
+    message_index = random.randint(0, len(bad_bot_response) - 1)
+    await message.channel.send(bad_bot_response[message_index])
+
+#end bad bot response -----------------------------------------------------------------------
     
+  #checks if any keys in fun_phrases are in the message
+  for i in fun_phrases:
+    if i in discord_message:
+      #if true sends the associated string for that key
+      await message.channel.send(fun_phrases[i])
+
+#end fun_phrases response -----------------------------------------------------------------------
+      
 keep_alive() #keeps the bot running by pinging the web server
 client.run(os.environ['Bot Token']) #allows the program to connect to the bot
